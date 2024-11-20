@@ -1,15 +1,18 @@
+import 'package:flutter_cli/app/data/models/transaction.dart';
 import 'package:get/get.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import '../../../data/services/transationService.dart';
 
 class HomeController extends GetxController {
   final TransactionService _transactionService = Get.find<TransactionService>();
   final RxDouble balance = 0.0.obs;
+  var transactions = <Transaction>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchUserBalance();
+    fetchUserTransactions();
   }
 
   Future<void> fetchUserBalance() async {
@@ -18,6 +21,21 @@ class HomeController extends GetxController {
     } catch (e) {
       print('Erreur lors de la récupération du solde: $e');
       balance.value = 0.0;
+    }
+  }
+
+  Future<void> fetchUserTransactions() async {
+    try {
+      // Récupérer les transactions de l'utilisateur via le service
+      List<Map<String, dynamic>> rawData =
+          await _transactionService.getUserTransactions();
+
+      // Mapper les données brutes en objets Transaction
+      transactions.value =
+          rawData.map((data) => Transaction.fromMap(data)).toList();
+    } catch (e) {
+      print('Erreur lors de la récupération des transactions: $e');
+      transactions.value = [];
     }
   }
 }

@@ -114,12 +114,51 @@ class TransactionService extends GetxController {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getUserTransactions() async {
+    try {
+      String currentUserID = _auth.currentUser!.uid;
+
+      // Récupérer les transactions où l'utilisateur est soit l'expéditeur soit le destinataire
+      QuerySnapshot senderSnapshot = await _firestore
+          .collection('transactions')
+          .where('sender', isEqualTo: currentUserID)
+          .get();
+          print(senderSnapshot);
+
+      QuerySnapshot receiverSnapshot = await _firestore
+          .collection('transactions')
+          .where('receiver', isEqualTo: currentUserID)
+          .get();
+
+      // Combiner les données
+      List<Map<String, dynamic>> transactions = [
+        ...senderSnapshot.docs.map((doc) => {
+              ...doc.data() as Map<String, dynamic>,
+              'id': doc.id, // Ajouter l'ID du document
+              // 'timestamp': (doc['timestamp'] as Timestamp).toDate(),
+            }),
+        ...receiverSnapshot.docs.map((doc) => {
+              ...doc.data() as Map<String, dynamic>,
+              'id': doc.id, // Ajouter l'ID du document
+              // 'timestamp': (doc['timestamp'] as Timestamp).toDate(),
+            }),
+      ];
+
+      // Trier par timestamp (les plus récents d'abord)
+      // transactions.sort((a, b) =>
+      //     (b['timestamp'] as Timestamp).compareTo(a['timestamp'] as Timestamp));
+
+      return transactions;
+    } catch (e) {
+      print('Erreur lors de la récupération des transactions: $e');
+      return [];
+    }
+  }
+
   @override
   void onClose() {
     receiverController.dispose();
     amountController.dispose();
     super.onClose();
   }
-
-  
 }

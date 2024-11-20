@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../controllers/home_controller.dart';
+import 'package:intl/intl.dart';
 
 class HomeView extends GetView<HomeController> {
-   HomeView({Key? key}) : super(key: key); // Remove 'const'
+  HomeView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,8 +17,7 @@ class HomeView extends GetView<HomeController> {
             CircleAvatar(
               backgroundColor: Colors.white,
               radius: 16,
-              child:
-                  Icon(Icons.person, color: Colors.orange.shade700, size: 20),
+              child: Icon(Icons.person, color: Colors.orange.shade700, size: 20),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -52,22 +51,22 @@ class HomeView extends GetView<HomeController> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-               Padding(
-                padding: EdgeInsets.all(16.0),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Card(
                   elevation: 3,
                   child: Padding(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        Text(
+                        const Text(
                           'Solde Disponible',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Obx(() => Text(
                               '${controller.balance.value.toStringAsFixed(0)} FCFA',
                               style: const TextStyle(
@@ -108,8 +107,7 @@ class HomeView extends GetView<HomeController> {
                           label: 'Envoi\nd\'argent',
                           color: Colors.orange.shade600,
                           onPressed: () {
-                            Get.toNamed(
-                                '/transaction'); // Navigation vers SendMoneyView
+                            Get.toNamed('/transaction'); // Navigation vers la vue Transaction
                           },
                         ),
                         _buildServiceButton(
@@ -156,33 +154,88 @@ class HomeView extends GetView<HomeController> {
                       ),
                     ],
                   ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(16.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Dernières transactions',
+                            const Text(
+                              'Liste transactions',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
                             ),
-                            Text(
-                              'Voir tout',
-                              style: TextStyle(
-                                color: Colors.orange,
-                                fontWeight: FontWeight.bold,
+                            GestureDetector(
+                              onTap: () {
+                                // Ajoutez une action pour "Voir tout"
+                              },
+                              child: const Text(
+                                'Voir tout',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 15),
-                        Text('Aucune transaction disponible.'),
+                        const SizedBox(height: 15),
+                        Obx(() {
+                          if (controller.transactions.isEmpty) {
+                            return const Center(
+                              child: Text(
+                                'Aucune transaction disponible.',
+                                style: TextStyle(
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: controller.transactions.length,
+                            itemBuilder: (context, index) {
+                              var transaction = controller.transactions[index];
+                              
+                              // Utilisez DateFormat pour formater le timestamp
+                              String formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(transaction.timestamp);
+
+                              return ListTile(
+                                leading: Icon(
+                                  transaction.sender ==
+                                          controller.transactions[index].sender
+                                      ? Icons.arrow_upward
+                                      : Icons.arrow_downward,
+                                  color: transaction.sender ==
+                                          controller.transactions[index].sender
+                                      ? Colors.red
+                                      : Colors.green,
+                                ),
+                                title: Text(
+                                  transaction.receiver ==
+                                          controller.transactions[index].receiver
+                                      ? 'Envoyé à ${transaction.receiver}'
+                                      : 'Reçu de ${transaction.sender}',
+                                ),
+                                subtitle: Text(
+                                  formattedDate, // Affichez la date formatée ici
+                                ),
+                                trailing: Text(
+                                  '${transaction.amount.toStringAsFixed(0)} FCFA',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -195,9 +248,9 @@ class HomeView extends GetView<HomeController> {
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.orange,
         unselectedItemColor: Colors.grey,
-        currentIndex: 0, // Fixed index for demo
+        currentIndex: 0,
         onTap: (index) {
-          // No navigation for this static view
+          // Ajouter une logique de navigation si nécessaire
         },
         items: const [
           BottomNavigationBarItem(
