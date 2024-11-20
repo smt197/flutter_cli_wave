@@ -1,11 +1,23 @@
 import 'package:get/get.dart';
 
+import '../../../data/services/transationService.dart';
+
 class HomeController extends GetxController {
-  //TODO: Implement HomeController
+  final TransactionService _transactionService = Get.find<TransactionService>();
+  final RxDouble balance = 0.0.obs;
 
-  final count = 0.obs;
+  @override
+  void onInit() {
+    super.onInit();
+    fetchUserBalance();
+  }
 
-
-
-  void increment() => count.value++;
+  Future<void> fetchUserBalance() async {
+    try {
+      balance.value = await _transactionService.getUserBalance();
+    } catch (e) {
+      print('Erreur lors de la récupération du solde: $e');
+      balance.value = 0.0;
+    }
+  }
 }

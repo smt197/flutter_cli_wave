@@ -24,7 +24,7 @@ class TransactionService extends GetxController {
 
     try {
       // Récupérer l'ID de l'utilisateur connecté
-      String currentUser = _auth.currentUser!.uid;
+      String currentUserID = _auth.currentUser!.uid;
 
       // Vérifier que le destinataire existe dans la base de données
       QuerySnapshot<Map<String, dynamic>> usersSnapshot = await _firestore
@@ -42,14 +42,43 @@ class TransactionService extends GetxController {
       }
 
       // Récupérer le document du destinataire
-      DocumentSnapshot<Map<String, dynamic>> receiverSnapshot = usersSnapshot.docs.first;
+      DocumentSnapshot<Map<String, dynamic>> receiverSnapshot =
+          usersSnapshot.docs.first;
       String receiverID = receiverSnapshot.id;
+      double receiverBalance =
+          receiverSnapshot.data()!['solde']?.toDouble() ?? 0.0;
+      double senderBalance =
+          (await _firestore.collection('users').doc(currentUserID).get())
+                  .data()!['solde']
+                  ?.toDouble() ??
+              0.0;
+
+      // Vérifier si le solde du sender est suffisant
+      double transactionAmount = double.parse(amount);
+      if (senderBalance < transactionAmount) {
+        Get.snackbar(
+          'Erreur',
+          'Votre solde est insuffisant pour effectuer cette transaction',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Mettre à jour les soldes
+      await _firestore
+          .collection('users')
+          .doc(currentUserID)
+          .update({'solde': senderBalance - transactionAmount});
+      await _firestore
+          .collection('users')
+          .doc(receiverID)
+          .update({'solde': receiverBalance + transactionAmount});
 
       // Enregistrer la transaction dans la base de données
       await _firestore.collection('transactions').add({
-        'sender': currentUser,
+        'sender': currentUserID,
         'receiver': receiverID,
-        'amount': double.parse(amount),
+        'amount': transactionAmount,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
@@ -72,10 +101,25 @@ class TransactionService extends GetxController {
     }
   }
 
+  Future<double> getUserBalance() async {
+    try {
+      String currentUserID = _auth.currentUser!.uid;
+      DocumentSnapshot<Map<String, dynamic>> userSnapshot =
+          await _firestore.collection('users').doc(currentUserID).get();
+
+      return userSnapshot.data()?['solde']?.toDouble() ?? 0.0;
+    } catch (e) {
+      print('Erreur lors de la récupération du solde: $e');
+      return 0.0;
+    }
+  }
+
   @override
   void onClose() {
     receiverController.dispose();
     amountController.dispose();
     super.onClose();
   }
+
+  
 }

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
-  const HomeView({Key? key}) : super(key: key);
+   HomeView({Key? key}) : super(key: key); // Remove 'const'
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,8 @@ class HomeView extends GetView<HomeController> {
             CircleAvatar(
               backgroundColor: Colors.white,
               radius: 16,
-              child: Icon(Icons.person, color: Colors.orange.shade700, size: 20),
+              child:
+                  Icon(Icons.person, color: Colors.orange.shade700, size: 20),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -51,7 +52,7 @@ class HomeView extends GetView<HomeController> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const Padding(
+               Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Card(
                   elevation: 3,
@@ -67,20 +68,19 @@ class HomeView extends GetView<HomeController> {
                           ),
                         ),
                         SizedBox(height: 10),
-                        Text(
-                          '500,000 FCFA',
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Obx(() => Text(
+                              '${controller.balance.value.toStringAsFixed(0)} FCFA',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )),
                       ],
                     ),
                   ),
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -108,7 +108,8 @@ class HomeView extends GetView<HomeController> {
                           label: 'Envoi\nd\'argent',
                           color: Colors.orange.shade600,
                           onPressed: () {
-                            Get.toNamed('/transaction'); // Navigation vers SendMoneyView
+                            Get.toNamed(
+                                '/transaction'); // Navigation vers SendMoneyView
                           },
                         ),
                         _buildServiceButton(
@@ -141,7 +142,6 @@ class HomeView extends GetView<HomeController> {
                   ],
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Container(

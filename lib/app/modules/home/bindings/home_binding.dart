@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../data/services/transationService.dart';
 import '../controllers/home_controller.dart';
 
 class HomeBinding extends Bindings {
@@ -8,5 +9,6 @@ class HomeBinding extends Bindings {
     Get.lazyPut<HomeController>(
       () => HomeController(),
     );
+    Get.lazyPut(()=>TransactionService());
   }
 }
