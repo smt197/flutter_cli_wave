@@ -26,7 +26,7 @@ class TransactionView extends GetView<TransactionController> {
             TextField(
               controller: controller.transactionService.receiverController,
               decoration: const InputDecoration(
-                labelText: 'Numéro du destinataire',
+                labelText: 'Numéro du destinataire (séparés par des virgules)' ,
                 border: OutlineInputBorder(),
               ),
             ),

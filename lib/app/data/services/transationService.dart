@@ -9,11 +9,11 @@ class TransactionService extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void sendTransaction() async {
-    String receiver = receiverController.text;
+  void sendTransaction({required VoidCallback onSuccess}) async {
+    String receiverInput = receiverController.text;
     String amount = amountController.text;
 
-    if (receiver.isEmpty || amount.isEmpty) {
+    if (receiverInput.isEmpty || amount.isEmpty) {
       Get.snackbar(
         'Erreur',
         'Veuillez remplir tous les champs',
@@ -26,78 +26,91 @@ class TransactionService extends GetxController {
       // Récupérer l'ID de l'utilisateur connecté
       String currentUserID = _auth.currentUser!.uid;
 
-      // Vérifier que le destinataire existe dans la base de données
-      QuerySnapshot<Map<String, dynamic>> usersSnapshot = await _firestore
-          .collection('users')
-          .where('telephone', isEqualTo: receiver)
-          .get();
+      // Séparer les numéros (par virgule ou espace) et supprimer les espaces inutiles
+      List<String> receivers =
+          receiverInput.split(',').map((e) => e.trim()).toList();
 
-      if (usersSnapshot.docs.isEmpty) {
-        Get.snackbar(
-          'Erreur',
-          'Le destinataire n\'existe pas dans la base de données',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      // Récupérer le document du destinataire
-      DocumentSnapshot<Map<String, dynamic>> receiverSnapshot =
-          usersSnapshot.docs.first;
-      String receiverID = receiverSnapshot.id;
-      double receiverBalance =
-          receiverSnapshot.data()!['solde']?.toDouble() ?? 0.0;
+      // Vérifier si le solde total est suffisant
+      double transactionAmount = double.parse(amount);
+      double totalAmount = transactionAmount * receivers.length;
       double senderBalance =
           (await _firestore.collection('users').doc(currentUserID).get())
                   .data()!['solde']
                   ?.toDouble() ??
               0.0;
 
-      // Vérifier si le solde du sender est suffisant
-      double transactionAmount = double.parse(amount);
-      if (senderBalance < transactionAmount) {
+      if (senderBalance < totalAmount) {
         Get.snackbar(
           'Erreur',
-          'Votre solde est insuffisant pour effectuer cette transaction',
+          'Votre solde est insuffisant pour effectuer ces transactions',
           snackPosition: SnackPosition.BOTTOM,
         );
         return;
       }
 
-      // Mettre à jour les soldes
-      await _firestore
-          .collection('users')
-          .doc(currentUserID)
-          .update({'solde': senderBalance - transactionAmount});
-      await _firestore
-          .collection('users')
-          .doc(receiverID)
-          .update({'solde': receiverBalance + transactionAmount});
+      // Traiter chaque destinataire
+      for (String receiver in receivers) {
+        // Vérifier que le destinataire existe dans la base de données
+        QuerySnapshot<Map<String, dynamic>> usersSnapshot = await _firestore
+            .collection('users')
+            .where('telephone', isEqualTo: receiver)
+            .get();
 
-      // Enregistrer la transaction dans la base de données
-      await _firestore.collection('transactions').add({
-        'sender': currentUserID,
-        'receiver': receiverID,
-        'amount': transactionAmount,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+        if (usersSnapshot.docs.isEmpty) {
+          Get.snackbar(
+            'Erreur',
+            'Le destinataire $receiver n\'existe pas dans la base de données',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          continue; // Passer au prochain destinataire
+        }
+
+        // Récupérer le document du destinataire
+        DocumentSnapshot<Map<String, dynamic>> receiverSnapshot =
+            usersSnapshot.docs.first;
+        String receiverID = receiverSnapshot.id;
+        double receiverBalance =
+            receiverSnapshot.data()!['solde']?.toDouble() ?? 0.0;
+
+        // Mettre à jour les soldes
+        await _firestore
+            .collection('users')
+            .doc(currentUserID)
+            .update({'solde': senderBalance - transactionAmount});
+        senderBalance -= transactionAmount; // Déduire immédiatement
+
+        await _firestore
+            .collection('users')
+            .doc(receiverID)
+            .update({'solde': receiverBalance + transactionAmount});
+
+        // Enregistrer la transaction dans la base de données
+        await _firestore.collection('transactions').add({
+          'sender': currentUserID,
+          'receiver': receiverID,
+          'amount': transactionAmount,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
 
       Get.snackbar(
         'Succès',
-        'Transaction envoyée à $receiver pour $amount FCFA',
+        'Transactions envoyées avec succès',
         snackPosition: SnackPosition.BOTTOM,
       );
 
       // Réinitialiser les champs de saisie
       receiverController.clear();
       amountController.clear();
+
+      onSuccess();
     } catch (e) {
       Get.snackbar(
         'Erreur',
-        'Une erreur s\'est produite lors de l\'envoi de la transaction',
+        'Une erreur s\'est produite lors de l\'envoi des transactions',
         snackPosition: SnackPosition.BOTTOM,
       );
-      print('Erreur lors de l\'envoi de la transaction: $e');
+      print('Erreur lors de l\'envoi des transactions: $e');
     }
   }
 
@@ -123,7 +136,7 @@ class TransactionService extends GetxController {
           .collection('transactions')
           .where('sender', isEqualTo: currentUserID)
           .get();
-          print(senderSnapshot);
+      print(senderSnapshot);
 
       QuerySnapshot receiverSnapshot = await _firestore
           .collection('transactions')

@@ -1,3 +1,4 @@
+import 'package:flutter_cli/app/modules/auth/views/phone_login_view.dart';
 import 'package:get/get.dart';
 
 import '../middlewares/auth_middleware.dart';
@@ -33,6 +34,10 @@ class AppPages {
       name: _Paths.TRANSACTION,
       page: () => TransactionView(),
       binding: TransactionBinding(),
+    ),
+     GetPage(
+      name: _Paths.LOGIN,
+      page: () => PhoneLoginView(),
     ),
   ];
 }

@@ -112,6 +112,62 @@ class AuthService extends GetxService {
     }
   }
 
+  Future<Map<String, dynamic>> signInWithPhoneAndCode(
+      String telephone, String secretCode) async {
+    try {
+      // Rechercher l'utilisateur par numéro de téléphone
+      final QuerySnapshot userQuery = await _firestore
+          .collection('users')
+          .where('telephone', isEqualTo: telephone)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isEmpty) {
+        throw Exception('Aucun utilisateur trouvé avec ce numéro de téléphone');
+      }
+
+      final userData = userQuery.docs.first.data() as Map<String, dynamic>;
+
+      // Vérifier le code secret
+      if (userData['secret_code'] != secretCode) {
+        throw Exception('Code secret incorrect');
+      }
+
+      final User? existingUser = _auth.currentUser;
+
+      if (existingUser == null) {
+        // Si pas de connexion active, on pourrait implémenter une reconnexion Google
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          throw Exception('Connexion Google annulée');
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final UserCredential userCredential =
+            await _auth.signInWithCredential(credential);
+
+        return {
+          'user': userCredential.user,
+          'userData': userData,
+        };
+      }
+
+      return {
+        'user': existingUser,
+        'userData': userData,
+      };
+
+    } catch (e) {
+      throw Exception('Erreur lors de la connexion: $e');
+    }
+  }
+
   // Déconnexion
   Future<void> logout() async {
     await _auth.signOut();

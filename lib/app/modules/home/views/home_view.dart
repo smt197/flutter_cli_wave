@@ -17,7 +17,8 @@ class HomeView extends GetView<HomeController> {
             CircleAvatar(
               backgroundColor: Colors.white,
               radius: 16,
-              child: Icon(Icons.person, color: Colors.orange.shade700, size: 20),
+              child:
+                  Icon(Icons.person, color: Colors.orange.shade700, size: 20),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -107,7 +108,8 @@ class HomeView extends GetView<HomeController> {
                           label: 'Envoi\nd\'argent',
                           color: Colors.orange.shade600,
                           onPressed: () {
-                            Get.toNamed('/transaction'); // Navigation vers la vue Transaction
+                            Get.toNamed(
+                                '/transaction'); // Navigation vers la vue Transaction
                           },
                         ),
                         _buildServiceButton(
@@ -202,9 +204,11 @@ class HomeView extends GetView<HomeController> {
                             itemCount: controller.transactions.length,
                             itemBuilder: (context, index) {
                               var transaction = controller.transactions[index];
-                              
+
                               // Utilisez DateFormat pour formater le timestamp
-                              String formattedDate = DateFormat('dd MMM yyyy, HH:mm').format(transaction.timestamp);
+                              String formattedDate =
+                                  DateFormat('dd MMM yyyy, HH:mm')
+                                      .format(transaction.timestamp);
 
                               return ListTile(
                                 leading: Icon(
@@ -219,7 +223,8 @@ class HomeView extends GetView<HomeController> {
                                 ),
                                 title: Text(
                                   transaction.receiver ==
-                                          controller.transactions[index].receiver
+                                          controller
+                                              .transactions[index].receiver
                                       ? 'Envoyé à ${transaction.receiver}'
                                       : 'Reçu de ${transaction.sender}',
                                 ),
@@ -250,7 +255,12 @@ class HomeView extends GetView<HomeController> {
         unselectedItemColor: Colors.grey,
         currentIndex: 0,
         onTap: (index) {
-          // Ajouter une logique de navigation si nécessaire
+          if (index == 2) {
+            // The logout item is at index 2
+            controller.logout();
+            Get.offAllNamed(
+                '/login'); // Navigate to login and remove all previous routes
+          }
         },
         items: const [
           BottomNavigationBarItem(

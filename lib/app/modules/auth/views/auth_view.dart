@@ -154,10 +154,10 @@ class AuthView extends GetView<AuthController> {
               TextButton(
                 onPressed: () {
                   // Navigation vers la page de connexion par email
-                  Get.toNamed('/login-email');
+                  Get.toNamed('/login-phone');
                 },
                 child: const Text(
-                  'Se connecter avec un email',
+                  'Se connecter avec un numero',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../data/services/authService.dart';
 import '../../../data/services/transationService.dart';
 import '../controllers/home_controller.dart';
 
@@ -10,5 +11,6 @@ class HomeBinding extends Bindings {
       () => HomeController(),
     );
     Get.lazyPut(()=>TransactionService());
+    Get.lazyPut(()=>AuthService());
   }
 }

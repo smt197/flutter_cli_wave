@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../data/services/transationService.dart';
+import '../../home/controllers/home_controller.dart';
 
 class TransactionController extends GetxController {
   final TransactionService transactionService = Get.put(TransactionService());
@@ -18,7 +19,10 @@ class TransactionController extends GetxController {
       return;
     }
 
-    transactionService.sendTransaction();
+    transactionService.sendTransaction(onSuccess: () {
+      Get.find<HomeController>()
+          .fetchUserTransactions(); // Rafraîchir les transactions
+    });
   }
 
   @override

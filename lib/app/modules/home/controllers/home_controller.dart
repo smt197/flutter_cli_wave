@@ -2,9 +2,13 @@ import 'package:flutter_cli/app/data/models/transaction.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import '../../../data/services/transationService.dart';
+import '../../../data/services/authService.dart';
+
 
 class HomeController extends GetxController {
   final TransactionService _transactionService = Get.find<TransactionService>();
+  final AuthService _authService = Get.find<AuthService>();
+
   final RxDouble balance = 0.0.obs;
   var transactions = <Transaction>[].obs;
 
@@ -37,5 +41,8 @@ class HomeController extends GetxController {
       print('Erreur lors de la récupération des transactions: $e');
       transactions.value = [];
     }
+  }
+  void logout() {
+    _authService.logout();
   }
 }
