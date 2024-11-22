@@ -4,7 +4,7 @@ import '../controllers/home_controller.dart';
 import 'package:intl/intl.dart';
 
 class HomeView extends GetView<HomeController> {
-  HomeView({Key? key}) : super(key: key);
+  const HomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +108,7 @@ class HomeView extends GetView<HomeController> {
                           label: 'Envoi\nd\'argent',
                           color: Colors.orange.shade600,
                           onPressed: () {
-                            Get.toNamed(
-                                '/transaction'); // Navigation vers la vue Transaction
+                            Get.toNamed('/transaction');
                           },
                         ),
                         _buildServiceButton(
@@ -173,9 +172,7 @@ class HomeView extends GetView<HomeController> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () {
-                                // Ajoutez une action pour "Voir tout"
-                              },
+                              onTap: () {},
                               child: const Text(
                                 'Voir tout',
                                 style: TextStyle(
@@ -204,38 +201,96 @@ class HomeView extends GetView<HomeController> {
                             itemCount: controller.transactions.length,
                             itemBuilder: (context, index) {
                               var transaction = controller.transactions[index];
-
-                              // Utilisez DateFormat pour formater le timestamp
                               String formattedDate =
                                   DateFormat('dd MMM yyyy, HH:mm')
                                       .format(transaction.timestamp);
 
-                              return ListTile(
-                                leading: Icon(
-                                  transaction.sender ==
-                                          controller.transactions[index].sender
-                                      ? Icons.arrow_upward
-                                      : Icons.arrow_downward,
-                                  color: transaction.sender ==
-                                          controller.transactions[index].sender
-                                      ? Colors.red
-                                      : Colors.green,
-                                ),
-                                title: Text(
-                                  transaction.receiver ==
-                                          controller
-                                              .transactions[index].receiver
-                                      ? 'Envoyé à ${transaction.receiver}'
-                                      : 'Reçu de ${transaction.sender}',
-                                ),
-                                subtitle: Text(
-                                  formattedDate, // Affichez la date formatée ici
-                                ),
-                                trailing: Text(
-                                  '${transaction.amount.toStringAsFixed(0)} FCFA',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              bool canCancel = DateTime.now()
+                                          .difference(transaction.timestamp)
+                                          .inMinutes <=
+                                      30 &&
+                                  transaction.status == 'completed';
+
+                              return Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      transaction.sender ==
+                                              controller
+                                                  .transactions[index].sender
+                                          ? Icons.arrow_upward
+                                          : Icons.arrow_downward,
+                                      color: transaction.sender ==
+                                              controller
+                                                  .transactions[index].sender
+                                          ? Colors.red
+                                          : Colors.green,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            transaction.receiver ==
+                                                    controller
+                                                        .transactions[index]
+                                                        .receiver
+                                                ? 'Envoyé à ${transaction.receiver}'
+                                                : 'Reçu de ${transaction.sender}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            formattedDate,
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '${transaction.amount.toStringAsFixed(0)} FCFA',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        if (canCancel)
+                                          TextButton(
+                                            onPressed: () async {
+                                              await controller
+                                                  .cancelTransaction(
+                                                      transaction.id);
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 0),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              foregroundColor: Colors.red,
+                                            ),
+                                            child: const Text(
+                                              'Annuler',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               );
                             },
@@ -256,10 +311,8 @@ class HomeView extends GetView<HomeController> {
         currentIndex: 0,
         onTap: (index) {
           if (index == 2) {
-            // The logout item is at index 2
             controller.logout();
-            Get.offAllNamed(
-                '/login'); // Navigate to login and remove all previous routes
+            Get.offAllNamed('/login');
           }
         },
         items: const [

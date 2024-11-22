@@ -89,6 +89,7 @@ class TransactionService extends GetxController {
           'sender': currentUserID,
           'receiver': receiverID,
           'amount': transactionAmount,
+          'status': 'completed',
           'timestamp': FieldValue.serverTimestamp(),
         });
       }
@@ -136,7 +137,6 @@ class TransactionService extends GetxController {
           .collection('transactions')
           .where('sender', isEqualTo: currentUserID)
           .get();
-      print(senderSnapshot);
 
       QuerySnapshot receiverSnapshot = await _firestore
           .collection('transactions')
@@ -161,6 +161,7 @@ class TransactionService extends GetxController {
       // transactions.sort((a, b) =>
       //     (b['timestamp'] as Timestamp).compareTo(a['timestamp'] as Timestamp));
 
+       print(transactions);
       return transactions;
     } catch (e) {
       print('Erreur lors de la récupération des transactions: $e');
@@ -168,8 +169,93 @@ class TransactionService extends GetxController {
     }
   }
 
+  Future<void> cancelTransaction(String transactionId) async {
+    try {
+      // Récupérer la transaction
+      DocumentSnapshot<Map<String, dynamic>> transactionSnapshot =
+          await _firestore.collection('transactions').doc(transactionId).get();
+
+      if (!transactionSnapshot.exists) {
+        Get.snackbar(
+          'Erreur',
+          'Transaction introuvable',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      Map<String, dynamic> transactionData = transactionSnapshot.data()!;
+      String senderId = transactionData['sender'];
+      String receiverId = transactionData['receiver'];
+      double amount = transactionData['amount'].toDouble();
+      Timestamp timestamp = transactionData['timestamp'];
+
+      // Vérifier si la transaction est encore annulable (30 minutes)
+      DateTime transactionTime = timestamp.toDate();
+      DateTime currentTime = DateTime.now();
+      if (currentTime.difference(transactionTime).inMinutes > 30) {
+        Get.snackbar(
+          'Erreur',
+          'La transaction ne peut plus être annulée après 30 minutes',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Vérifier si la transaction est déjà annulée
+      if (transactionData['status'] == 'canceled') {
+        Get.snackbar(
+          'Erreur',
+          'Cette transaction a déjà été annulée',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Récupérer les soldes actuels
+      DocumentSnapshot<Map<String, dynamic>> senderSnapshot =
+          await _firestore.collection('users').doc(senderId).get();
+      DocumentSnapshot<Map<String, dynamic>> receiverSnapshot =
+          await _firestore.collection('users').doc(receiverId).get();
+
+      double senderBalance = senderSnapshot.data()!['solde']?.toDouble() ?? 0.0;
+      double receiverBalance =
+          receiverSnapshot.data()!['solde']?.toDouble() ?? 0.0;
+
+      // Mettre à jour les soldes
+      await _firestore
+          .collection('users')
+          .doc(senderId)
+          .update({'solde': senderBalance + amount});
+      await _firestore
+          .collection('users')
+          .doc(receiverId)
+          .update({'solde': receiverBalance - amount});
+
+      // Mettre à jour le statut de la transaction
+      await _firestore
+          .collection('transactions')
+          .doc(transactionId)
+          .update({'status': 'canceled'});
+
+      Get.snackbar(
+        'Succès',
+        'Transaction annulée avec succès',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Une erreur s\'est produite lors de l\'annulation de la transaction',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      print('Erreur lors de l\'annulation de la transaction: $e');
+    }
+  }
+
   @override
   void onClose() {
+    // Vérifier avant de disposer
     receiverController.dispose();
     amountController.dispose();
     super.onClose();

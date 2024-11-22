@@ -1,9 +1,7 @@
 import 'package:flutter_cli/app/data/models/transaction.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import '../../../data/services/transationService.dart';
 import '../../../data/services/authService.dart';
-
 
 class HomeController extends GetxController {
   final TransactionService _transactionService = Get.find<TransactionService>();
@@ -42,6 +40,30 @@ class HomeController extends GetxController {
       transactions.value = [];
     }
   }
+
+  Future<void> cancelTransaction(String transactionId) async {
+    try {
+      await _transactionService.cancelTransaction(transactionId);
+
+      // Mettre à jour la liste des transactions après annulation
+      await fetchUserTransactions();
+      await fetchUserBalance();
+
+      Get.snackbar(
+        'Succès',
+        'Transaction annulée avec succès',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erreur',
+        'Une erreur est survenue lors de l\'annulation',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      print('Erreur lors de l\'annulation: $e');
+    }
+  }
+
   void logout() {
     _authService.logout();
   }

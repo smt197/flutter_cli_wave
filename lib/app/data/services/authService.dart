@@ -15,6 +15,9 @@ class AuthService extends GetxService {
   final _firebaseUser = Rxn<User>();
   User? get firebaseUser => _firebaseUser.value;
 
+  final RxnString _userRole = RxnString();
+  String? get userRole => _userRole.value;
+
   Future<AuthService> init() async {
     // Modifier le type de retour
     try {
@@ -39,23 +42,41 @@ class AuthService extends GetxService {
     }
   }
 
+  Future<String?> getUserRole() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      final data = doc.data();
+      return data?['role'];
+    } catch (e) {
+      print("Erreur lors de la récupération du rôle : $e");
+      return null;
+    }
+  }
+
   // Synchroniser les données Firebase Auth avec Firestore
   Future<void> _syncWithFirestore(User user) async {
     try {
       final doc = await _firestore.collection('users').doc(user.uid).get();
 
-      if (!doc.exists) {
+      if (doc.exists) {
+        // Récupérer le rôle de l'utilisateur
+        final data = doc.data();
+        _userRole.value = data?['role'];
+      } else {
         // Créer un document Firestore si inexistant
         await _firestore.collection('users').doc(user.uid).set({
           'email': user.email,
           'name': user.displayName ?? '',
-          'telephone': user.phoneNumber ??
-              '', // Si Firebase Auth ne fournit pas, demander l'entrée utilisateur
-          'solde': 10000, // Solde initial
-          'plafond': 200000, // Plafond initial
-          'role': 'CLIENT', // Rôle par défaut
+          'telephone': user.phoneNumber ?? '',
+          'solde': 10000,
+          'plafond': 200000,
+          'role': 'CLIENT', // Par défaut
           'createdAt': FieldValue.serverTimestamp(),
         });
+        _userRole.value = 'CLIENT';
       }
     } catch (e) {
       print("Erreur lors de la synchronisation avec Firestore: $e");
@@ -162,7 +183,6 @@ class AuthService extends GetxService {
         'user': existingUser,
         'userData': userData,
       };
-
     } catch (e) {
       throw Exception('Erreur lors de la connexion: $e');
     }

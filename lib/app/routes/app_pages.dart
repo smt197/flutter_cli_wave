@@ -1,9 +1,11 @@
-import 'package:flutter_cli/app/modules/auth/views/phone_login_view.dart';
 import 'package:get/get.dart';
 
 import '../middlewares/auth_middleware.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/auth_view.dart';
+import '../modules/auth/views/phone_login_view.dart';
+import '../modules/distributeurpage/bindings/distributeurpage_binding.dart';
+import '../modules/distributeurpage/views/distributeurpage_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/transaction/bindings/transaction_binding.dart';
@@ -19,7 +21,7 @@ class AppPages {
   static final routes = [
     GetPage(
       name: _Paths.HOME,
-      page: () =>  HomeView(),
+      page: () => const HomeView(),
       binding: HomeBinding(),
       middlewares: [
         RouteGuard(),
@@ -32,12 +34,17 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.TRANSACTION,
-      page: () => TransactionView(),
+      page: () => const TransactionView(),
       binding: TransactionBinding(),
     ),
-     GetPage(
+    GetPage(
       name: _Paths.LOGIN,
-      page: () => PhoneLoginView(),
+      page: () => const PhoneLoginView(),
+    ),
+    GetPage(
+      name: _Paths.DISTRIBUTEURPAGE,
+      page: () => const DistributeurpageView(),
+      binding: DistributeurpageBinding(),
     ),
   ];
 }
